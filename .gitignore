@@ -6,3 +6,4 @@ dist/
 .env.*
 !.env.example
 assets/images/source-*
+assets/images/*.png

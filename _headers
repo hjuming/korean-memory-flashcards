@@ -11,3 +11,6 @@
 /assets/images/og-korean-memory-flashcards.jpg
   Cache-Control: public, max-age=31536000, immutable
   X-Robots-Tag: all
+
+/assets/images/cards/*.jpg
+  Cache-Control: public, max-age=31536000, immutable

@@ -9,7 +9,7 @@ const sampleCards = [
     tag: "諧音",
     cue: "형 聽起來像「型」，把 친한 想成很親的型男哥哥。",
     scene: "一位很親近的型男哥哥站在門口招手，外套上寫著 형。",
-    image: "",
+    image: "assets/images/cards/chinhan-hyeong.jpg",
     status: "new",
     reviewCount: 0,
     createdAt: "2026-06-07T00:00:00.000Z"
@@ -22,7 +22,7 @@ const sampleCards = [
     tag: "漢字音",
     cue: "漢字是「四寸」，把堂表親想成只隔四寸距離的親戚。",
     scene: "四位堂表兄弟姊妹站在一把四寸尺旁邊，尺上寫著 사촌。",
-    image: "",
+    image: "assets/images/cards/sachon.jpg",
     status: "new",
     reviewCount: 0,
     createdAt: "2026-06-07T00:00:00.000Z"
@@ -35,7 +35,7 @@ const sampleCards = [
     tag: "諧音",
     cue: "자리 聽起來像「這裡」，問服務生：這裡有座位嗎？",
     scene: "餐廳裡有人指著一張椅子說「這裡」，椅背上貼著 자리。",
-    image: "",
+    image: "assets/images/cards/jari.jpg",
     status: "stuck",
     reviewCount: 1,
     createdAt: "2026-06-07T00:00:00.000Z"
@@ -48,7 +48,7 @@ const sampleCards = [
     tag: "漢字音",
     cue: "漢字是「葉書」，想像把文字寫在樹葉上寄出去。",
     scene: "一片大葉子被當成明信片，葉面上寫著 엽서。",
-    image: "",
+    image: "assets/images/cards/yeopseo.jpg",
     status: "new",
     reviewCount: 0,
     createdAt: "2026-06-07T00:00:00.000Z"
@@ -61,12 +61,14 @@ const sampleCards = [
     tag: "外來語",
     cue: "빵 的聲音像「胖」，把麵包想成胖胖一顆。",
     scene: "一顆胖胖的麵包膨起來，表面浮出 빵。",
-    image: "",
+    image: "assets/images/cards/bbang.jpg",
     status: "mastered",
     reviewCount: 2,
     createdAt: "2026-06-07T00:00:00.000Z"
   }
 ];
+
+const sampleCardsById = Object.fromEntries(sampleCards.map((card) => [card.id, card]));
 
 const elements = {
   totalCount: document.getElementById("totalCount"),
@@ -131,10 +133,24 @@ function loadCards() {
     if (!Array.isArray(source)) {
       return sampleCards.map(cloneCard);
     }
-    return source.map(normalizeCard).filter(Boolean);
+    return hydrateSampleCards(source.map(normalizeCard).filter(Boolean));
   } catch {
     return sampleCards.map(cloneCard);
   }
+}
+
+function hydrateSampleCards(loadedCards) {
+  return loadedCards.map((card) => {
+    const sampleCard = sampleCardsById[card.id];
+    if (!sampleCard) {
+      return card;
+    }
+    return {
+      ...card,
+      image: card.image || sampleCard.image,
+      scene: card.scene || sampleCard.scene
+    };
+  });
 }
 
 function saveCards() {
@@ -189,6 +205,9 @@ function safeImageSource(value) {
   }
   if (source.startsWith("data:image/")) {
     return source;
+  }
+  if (/^\.?\/?assets\/images\//.test(source) && !source.includes("..")) {
+    return source.replace(/^\.\//, "").replace(/^\//, "");
   }
   try {
     const url = new URL(source);
@@ -278,6 +297,7 @@ function renderFlashcard(active) {
 
 function renderVisual(card) {
   elements.frontVisual.replaceChildren();
+  elements.frontVisual.classList.toggle("has-image", Boolean(card.image));
   if (card.image) {
     const image = document.createElement("img");
     image.src = card.image;
@@ -290,6 +310,7 @@ function renderVisual(card) {
 
 function renderTextVisual(text) {
   elements.frontVisual.replaceChildren();
+  elements.frontVisual.classList.remove("has-image");
   const fallback = document.createElement("span");
   fallback.id = "frontImageFallback";
   fallback.textContent = text;
