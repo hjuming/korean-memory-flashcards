@@ -4,16 +4,39 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="韓文圖像與聯想記憶閃卡，支援本機保存、搜尋篩選、匯入匯出與圖像提示詞。">
+    <meta name="theme-color" content="#fbf7ef">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:site_name" content="韓文圖像聯想閃卡">
+    <meta property="og:title" content="韓文圖像聯想閃卡">
+    <meta property="og:description" content="把背不起來的韓文單字，變成有畫面的記憶。">
+    <meta property="og:url" content="https://korean-memory-flashcards.pages.dev/">
+    <meta property="og:image" content="https://korean-memory-flashcards.pages.dev/assets/images/og-korean-memory-flashcards.jpg">
+    <meta property="og:image:secure_url" content="https://korean-memory-flashcards.pages.dev/assets/images/og-korean-memory-flashcards.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="韓文圖像聯想閃卡主視覺，桌面上有韓文字卡與圖像記憶線索。">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="韓文圖像聯想閃卡">
+    <meta name="twitter:description" content="把背不起來的韓文單字，變成有畫面的記憶。">
+    <meta name="twitter:image" content="https://korean-memory-flashcards.pages.dev/assets/images/og-korean-memory-flashcards.jpg">
     <title>韓文圖像聯想閃卡</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="assets/styles.css?v=20260607">
+    <link rel="preload" as="image" href="assets/images/hero-korean-memory-flashcards.jpg">
+    <link rel="stylesheet" href="assets/styles.css?v=20260607b">
   </head>
   <body>
     <div class="app-shell">
-      <header class="app-header">
-        <div>
-          <p class="eyebrow">Korean Memory Cards</p>
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Korean Memory Flashcards</p>
           <h1>韓文圖像聯想閃卡</h1>
+          <p class="hero-lede">把背不起來的韓文單字，變成有畫面的記憶。</p>
+          <div class="hero-actions" aria-label="主要功能">
+            <a class="hero-link" href="#study">開始練習</a>
+            <span>新增單字 · 聯想密碼 · 圖像提示</span>
+          </div>
         </div>
         <div class="summary-strip" aria-label="記憶庫統計">
           <div>
@@ -31,7 +54,7 @@
         </div>
       </header>
 
-      <main class="workspace">
+      <main class="workspace" id="study">
         <section class="study-panel" aria-label="閃卡練習">
           <div class="study-toolbar">
             <div>
@@ -177,6 +200,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="assets/app.js?v=20260607"></script>
+    <script src="assets/app.js?v=20260607b"></script>
   </body>
 </html>

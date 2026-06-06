@@ -3,3 +3,11 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
+
+/assets/images/hero-korean-memory-flashcards.jpg
+  Cache-Control: public, max-age=31536000, immutable
+  X-Robots-Tag: all
+
+/assets/images/og-korean-memory-flashcards.jpg
+  Cache-Control: public, max-age=31536000, immutable
+  X-Robots-Tag: all
