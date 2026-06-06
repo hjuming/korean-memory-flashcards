@@ -1,0 +1,3 @@
+name = "korean-memory-flashcards"
+compatibility_date = "2026-06-07"
+pages_build_output_dir = "."

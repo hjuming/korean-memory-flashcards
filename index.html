@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="韓文圖像與聯想記憶閃卡，支援本機保存、搜尋篩選、匯入匯出與圖像提示詞。">
+    <title>韓文圖像聯想閃卡</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="assets/styles.css?v=20260607">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Korean Memory Cards</p>
+          <h1>韓文圖像聯想閃卡</h1>
+        </div>
+        <div class="summary-strip" aria-label="記憶庫統計">
+          <div>
+            <span id="totalCount">0</span>
+            <small>張卡</small>
+          </div>
+          <div>
+            <span id="masteredCount">0</span>
+            <small>熟了</small>
+          </div>
+          <div>
+            <span id="stuckCount">0</span>
+            <small>卡住</small>
+          </div>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="study-panel" aria-label="閃卡練習">
+          <div class="study-toolbar">
+            <div>
+              <p class="section-kicker" id="activeTag">全部單字</p>
+              <h2 id="cardCounter">0 / 0</h2>
+            </div>
+            <div class="icon-actions">
+              <button class="icon-button" id="shuffleButton" type="button" aria-label="隨機排序" title="隨機排序">↻</button>
+              <button class="icon-button" id="flipButton" type="button" aria-label="翻面" title="翻面">⇄</button>
+            </div>
+          </div>
+
+          <button class="flashcard" id="flashcard" type="button" aria-label="點擊翻面">
+            <span class="card-face card-front">
+              <span class="card-tag" id="cardTag">漢字音</span>
+              <span class="korean-word" id="frontKorean">사촌</span>
+              <span class="pronunciation" id="frontPronunciation">sa-chon</span>
+              <span class="visual-frame" id="frontVisual">
+                <span id="frontImageFallback">四寸親戚站成一排</span>
+              </span>
+            </span>
+            <span class="card-face card-back">
+              <span class="meaning" id="backMeaning">堂表兄弟姊妹</span>
+              <span class="cue-box">
+                <span class="cue-label">聯想密碼</span>
+                <span id="backCue">漢字「四寸」，把親戚關係縮成四寸距離。</span>
+              </span>
+              <span class="scene-box">
+                <span class="cue-label">圖像畫面</span>
+                <span id="backScene">四位堂表兄弟姊妹站在很短的四寸尺旁邊。</span>
+              </span>
+            </span>
+          </button>
+
+          <div class="study-controls">
+            <button class="ghost-button" id="prevButton" type="button">← 上一張</button>
+            <button class="ghost-button" id="nextButton" type="button">下一張 →</button>
+          </div>
+
+          <div class="review-row">
+            <button class="soft-button danger" id="markStuckButton" type="button">還卡住</button>
+            <button class="soft-button" id="copyPromptButton" type="button">複製圖像 Prompt</button>
+            <button class="soft-button success" id="markMasteredButton" type="button">記住了</button>
+          </div>
+        </section>
+
+        <section class="editor-panel" aria-label="新增或編輯單字">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Card Builder</p>
+              <h2 id="editorTitle">新增一張記憶卡</h2>
+            </div>
+            <button class="link-button hidden" id="cancelEditButton" type="button">取消編輯</button>
+          </div>
+
+          <form id="cardForm" class="card-form">
+            <label>
+              <span>韓文單字 / 片語</span>
+              <input id="koreanInput" name="korean" type="text" placeholder="例如：자리" autocomplete="off" required>
+            </label>
+            <label>
+              <span>中文意思</span>
+              <input id="meaningInput" name="meaning" type="text" placeholder="例如：座位" autocomplete="off" required>
+            </label>
+            <div class="form-grid">
+              <label>
+                <span>發音拆解</span>
+                <input id="pronunciationInput" name="pronunciation" type="text" placeholder="ja-ri" autocomplete="off">
+              </label>
+              <label>
+                <span>記憶類型</span>
+                <select id="tagInput" name="tag">
+                  <option value="漢字音">漢字音</option>
+                  <option value="諧音">諧音</option>
+                  <option value="情境畫面">情境畫面</option>
+                  <option value="外來語">外來語</option>
+                  <option value="文法片語">文法片語</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              <span>聯想密碼</span>
+              <textarea id="cueInput" name="cue" rows="3" placeholder="例如：자리 聽起來像「這裡」，這裡有座位嗎？" required></textarea>
+            </label>
+            <label>
+              <span>圖像畫面</span>
+              <textarea id="sceneInput" name="scene" rows="3" placeholder="例如：一個人指著椅子說「這裡」，椅子上寫著 자리。"></textarea>
+            </label>
+            <label>
+              <span>圖片網址</span>
+              <input id="imageInput" name="image" type="url" placeholder="https://...">
+            </label>
+            <label class="file-drop">
+              <span>本機圖片</span>
+              <input id="imageFileInput" name="imageFile" type="file" accept="image/*">
+              <small id="imageFileStatus">未選擇圖片</small>
+            </label>
+            <button class="primary-button" id="submitButton" type="submit">加入記憶庫</button>
+          </form>
+        </section>
+
+        <section class="library-panel" aria-label="記憶庫">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Library</p>
+              <h2>記憶庫</h2>
+            </div>
+            <button class="link-button" id="resetSamplesButton" type="button">重載範例</button>
+          </div>
+
+          <div class="library-tools">
+            <label class="search-field">
+              <span>搜尋</span>
+              <input id="searchInput" type="search" placeholder="韓文、中文或聯想">
+            </label>
+            <label>
+              <span>篩選</span>
+              <select id="filterInput">
+                <option value="all">全部</option>
+                <option value="stuck">卡住</option>
+                <option value="mastered">熟了</option>
+                <option value="漢字音">漢字音</option>
+                <option value="諧音">諧音</option>
+                <option value="情境畫面">情境畫面</option>
+                <option value="外來語">外來語</option>
+                <option value="文法片語">文法片語</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="data-actions">
+            <button class="ghost-button" id="exportButton" type="button">匯出 JSON</button>
+            <label class="ghost-upload">
+              匯入 JSON
+              <input id="importInput" type="file" accept="application/json">
+            </label>
+          </div>
+
+          <div class="card-list" id="cardList" aria-live="polite"></div>
+          <p class="empty-state hidden" id="emptyState">目前沒有符合條件的單字。</p>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="assets/app.js?v=20260607"></script>
+  </body>
+</html>
