@@ -32,7 +32,7 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="manifest" href="/site.webmanifest">
     <link rel="preload" as="image" href="assets/images/hero-korean-memory-flashcards.jpg">
-    <link rel="stylesheet" href="assets/styles.css?v=20260607c">
+    <link rel="stylesheet" href="assets/styles.css?v=20260607d">
   </head>
   <body>
     <div class="app-shell">
@@ -61,6 +61,12 @@
           </div>
         </div>
       </header>
+
+      <div class="studio-nav" aria-label="記憶庫管理">
+        <button class="studio-nav-button is-active" type="button" data-panel-trigger="builder">新增</button>
+        <button class="studio-nav-button" type="button" data-panel-trigger="library">記憶庫</button>
+        <button class="studio-nav-button" type="button" data-panel-trigger="progress">進度</button>
+      </div>
 
       <main class="workspace" id="study">
         <section class="study-panel" aria-label="閃卡練習">
@@ -107,34 +113,124 @@
             <button class="soft-button" id="copyPromptButton" type="button">複製圖像 Prompt</button>
             <button class="soft-button success" id="markMasteredButton" type="button">記住了</button>
           </div>
+
+          <div class="practice-progress" aria-label="目前單字進度">
+            <div>
+              <span>練習次數</span>
+              <strong id="reviewCount">0</strong>
+            </div>
+            <div>
+              <span>連續記住</span>
+              <strong id="correctStreak">0</strong>
+            </div>
+            <div>
+              <span>下次複習</span>
+              <strong id="dueLabel">今天</strong>
+            </div>
+          </div>
         </section>
 
-        <section class="editor-panel" aria-label="新增或編輯單字">
-          <div class="panel-heading">
-            <div>
-              <p class="section-kicker">Card Builder</p>
-              <h2 id="editorTitle">新增一張記憶卡</h2>
+        <aside class="side-panel" aria-label="新增與記憶庫管理">
+          <section class="side-pane is-active" data-panel="builder" aria-label="新增或編輯單字">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">Card Studio</p>
+                <h2 id="editorTitle">新增一張記憶卡</h2>
+              </div>
+              <button class="link-button hidden" id="cancelEditButton" type="button">取消編輯</button>
             </div>
-            <button class="link-button hidden" id="cancelEditButton" type="button">取消編輯</button>
-          </div>
 
-          <form id="cardForm" class="card-form">
-            <label>
-              <span>韓文單字 / 片語</span>
-              <input id="koreanInput" name="korean" type="text" placeholder="例如：자리" autocomplete="off" required>
-            </label>
-            <label>
-              <span>中文意思</span>
-              <input id="meaningInput" name="meaning" type="text" placeholder="例如：座位" autocomplete="off" required>
-            </label>
-            <div class="form-grid">
+            <div class="generator-box" aria-label="自動生成草稿">
               <label>
-                <span>發音拆解</span>
-                <input id="pronunciationInput" name="pronunciation" type="text" placeholder="ja-ri" autocomplete="off">
+                <span>先輸入韓文</span>
+                <input id="quickKoreanInput" type="text" placeholder="例如：자리" autocomplete="off">
               </label>
               <label>
-                <span>記憶類型</span>
-                <select id="tagInput" name="tag">
+                <span>中文意思</span>
+                <input id="quickMeaningInput" type="text" placeholder="例如：座位，可先留空">
+              </label>
+              <button class="primary-button" id="generateDraftButton" type="button">生成聯想密碼 / 圖像 Prompt</button>
+              <div class="draft-preview hidden" id="draftPreview">
+                <strong>已產生草稿</strong>
+                <span id="draftCuePreview"></span>
+                <button class="soft-button" id="applyDraftButton" type="button">套用到表單</button>
+              </div>
+            </div>
+
+            <form id="cardForm" class="card-form">
+              <label>
+                <span>韓文單字 / 片語</span>
+                <input id="koreanInput" name="korean" type="text" placeholder="例如：자리" autocomplete="off" required>
+              </label>
+              <label>
+                <span>中文意思</span>
+                <input id="meaningInput" name="meaning" type="text" placeholder="例如：座位" autocomplete="off" required>
+              </label>
+              <div class="form-grid">
+                <label>
+                  <span>發音拆解</span>
+                  <input id="pronunciationInput" name="pronunciation" type="text" placeholder="ja-ri" autocomplete="off">
+                </label>
+                <label>
+                  <span>記憶類型</span>
+                  <select id="tagInput" name="tag">
+                    <option value="漢字音">漢字音</option>
+                    <option value="諧音">諧音</option>
+                    <option value="情境畫面">情境畫面</option>
+                    <option value="外來語">外來語</option>
+                    <option value="文法片語">文法片語</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                <span>聯想密碼</span>
+                <textarea id="cueInput" name="cue" rows="3" placeholder="例如：자리 聽起來像「這裡」，這裡有座位嗎？" required></textarea>
+              </label>
+              <label>
+                <span>圖像畫面</span>
+                <textarea id="sceneInput" name="scene" rows="3" placeholder="例如：一個人指著椅子說「這裡」，椅子上寫著 자리。"></textarea>
+              </label>
+              <label>
+                <span>圖像 Prompt</span>
+                <textarea id="imagePromptInput" name="imagePrompt" rows="5" placeholder="生成草稿後會自動帶入，也可自行修改。"></textarea>
+              </label>
+              <label>
+                <span>圖片網址</span>
+                <input id="imageInput" name="image" type="url" placeholder="https://...">
+              </label>
+              <label class="file-drop">
+                <span>上傳生成後的圖片</span>
+                <input id="imageFileInput" name="imageFile" type="file" accept="image/*">
+                <small id="imageFileStatus">未選擇圖片</small>
+              </label>
+              <div class="form-actions">
+                <button class="ghost-button" id="copyFormPromptButton" type="button">複製表單 Prompt</button>
+                <button class="primary-button" id="submitButton" type="submit">加入記憶庫</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="side-pane" data-panel="library" aria-label="記憶庫">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">Library</p>
+                <h2>記憶庫</h2>
+              </div>
+              <button class="link-button" id="resetSamplesButton" type="button">重載範例</button>
+            </div>
+
+            <div class="library-tools">
+              <label class="search-field">
+                <span>搜尋</span>
+                <input id="searchInput" type="search" placeholder="韓文、中文或聯想">
+              </label>
+              <label>
+                <span>篩選</span>
+                <select id="filterInput">
+                  <option value="all">全部</option>
+                  <option value="due">待複習</option>
+                  <option value="stuck">卡住</option>
+                  <option value="mastered">熟了</option>
                   <option value="漢字音">漢字音</option>
                   <option value="諧音">諧音</option>
                   <option value="情境畫面">情境畫面</option>
@@ -143,71 +239,51 @@
                 </select>
               </label>
             </div>
-            <label>
-              <span>聯想密碼</span>
-              <textarea id="cueInput" name="cue" rows="3" placeholder="例如：자리 聽起來像「這裡」，這裡有座位嗎？" required></textarea>
-            </label>
-            <label>
-              <span>圖像畫面</span>
-              <textarea id="sceneInput" name="scene" rows="3" placeholder="例如：一個人指著椅子說「這裡」，椅子上寫著 자리。"></textarea>
-            </label>
-            <label>
-              <span>圖片網址</span>
-              <input id="imageInput" name="image" type="url" placeholder="https://...">
-            </label>
-            <label class="file-drop">
-              <span>本機圖片</span>
-              <input id="imageFileInput" name="imageFile" type="file" accept="image/*">
-              <small id="imageFileStatus">未選擇圖片</small>
-            </label>
-            <button class="primary-button" id="submitButton" type="submit">加入記憶庫</button>
-          </form>
-        </section>
 
-        <section class="library-panel" aria-label="記憶庫">
-          <div class="panel-heading">
-            <div>
-              <p class="section-kicker">Library</p>
-              <h2>記憶庫</h2>
+            <div class="data-actions">
+              <button class="ghost-button" id="exportButton" type="button">匯出 JSON</button>
+              <label class="ghost-upload">
+                匯入 JSON
+                <input id="importInput" type="file" accept="application/json">
+              </label>
             </div>
-            <button class="link-button" id="resetSamplesButton" type="button">重載範例</button>
-          </div>
 
-          <div class="library-tools">
-            <label class="search-field">
-              <span>搜尋</span>
-              <input id="searchInput" type="search" placeholder="韓文、中文或聯想">
-            </label>
-            <label>
-              <span>篩選</span>
-              <select id="filterInput">
-                <option value="all">全部</option>
-                <option value="stuck">卡住</option>
-                <option value="mastered">熟了</option>
-                <option value="漢字音">漢字音</option>
-                <option value="諧音">諧音</option>
-                <option value="情境畫面">情境畫面</option>
-                <option value="外來語">外來語</option>
-                <option value="文法片語">文法片語</option>
-              </select>
-            </label>
-          </div>
+            <div class="card-list" id="cardList" aria-live="polite"></div>
+            <p class="empty-state hidden" id="emptyState">目前沒有符合條件的單字。</p>
+          </section>
 
-          <div class="data-actions">
-            <button class="ghost-button" id="exportButton" type="button">匯出 JSON</button>
-            <label class="ghost-upload">
-              匯入 JSON
-              <input id="importInput" type="file" accept="application/json">
-            </label>
-          </div>
-
-          <div class="card-list" id="cardList" aria-live="polite"></div>
-          <p class="empty-state hidden" id="emptyState">目前沒有符合條件的單字。</p>
-        </section>
+          <section class="side-pane" data-panel="progress" aria-label="學習進度">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">Progress</p>
+                <h2>學習進度</h2>
+              </div>
+            </div>
+            <div class="progress-grid" aria-label="進度統計">
+              <div>
+                <span>待複習</span>
+                <strong id="dueCount">0</strong>
+              </div>
+              <div>
+                <span>總練習</span>
+                <strong id="totalReviews">0</strong>
+              </div>
+              <div>
+                <span>完成率</span>
+                <strong id="masteryRate">0%</strong>
+              </div>
+            </div>
+            <div class="progress-meter" aria-hidden="true">
+              <span id="masteryMeter"></span>
+            </div>
+            <div class="progress-list" id="progressList"></div>
+          </section>
+        </aside>
       </main>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="assets/app.js?v=20260607c"></script>
+    <script src="assets/card-utils.js?v=20260607d"></script>
+    <script src="assets/app.js?v=20260607d"></script>
   </body>
 </html>

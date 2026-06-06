@@ -183,9 +183,43 @@ h2 {
   color: var(--muted);
 }
 
+.studio-nav {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(251, 247, 239, 0.86);
+  backdrop-filter: blur(14px);
+}
+
+.studio-nav-button {
+  min-height: 42px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: transparent;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.studio-nav-button.is-active {
+  color: var(--sage);
+  border-color: rgba(73, 107, 88, 0.24);
+  background: rgba(73, 107, 88, 0.1);
+}
+
 .workspace {
   display: grid;
-  grid-template-columns: minmax(420px, 1.08fr) minmax(340px, 0.92fr) minmax(280px, 0.62fr);
+  grid-template-columns: minmax(440px, 1fr) minmax(360px, 430px);
   gap: 18px;
   align-items: start;
 }
@@ -195,8 +229,7 @@ h2 {
 }
 
 .study-panel,
-.editor-panel,
-.library-panel {
+.side-panel {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 253, 248, 0.88);
@@ -207,9 +240,23 @@ h2 {
   padding: 18px;
 }
 
-.editor-panel,
-.library-panel {
+.side-panel {
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 96px);
+  overflow: hidden;
   padding: 18px;
+}
+
+.side-pane {
+  display: none;
+  max-height: calc(100vh - 132px);
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.side-pane.is-active {
+  display: block;
 }
 
 .panel-heading,
@@ -224,7 +271,8 @@ h2 {
 .icon-actions,
 .study-controls,
 .review-row,
-.data-actions {
+.data-actions,
+.form-actions {
   display: flex;
   gap: 8px;
   min-width: 0;
@@ -406,6 +454,39 @@ h2 {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.practice-progress,
+.progress-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.practice-progress div,
+.progress-grid div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 248, 0.74);
+}
+
+.practice-progress span,
+.progress-grid span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.practice-progress strong,
+.progress-grid strong {
+  display: block;
+  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
 .primary-button,
 .ghost-button,
 .soft-button,
@@ -467,9 +548,18 @@ h2 {
 }
 
 .card-form,
-.library-tools {
+.library-tools,
+.generator-box {
   display: grid;
   gap: 13px;
+}
+
+.generator-box {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid rgba(73, 107, 88, 0.18);
+  border-radius: var(--radius);
+  background: rgba(73, 107, 88, 0.06);
 }
 
 .form-grid,
@@ -535,6 +625,34 @@ button:focus-visible {
   font-weight: 500;
 }
 
+.draft-preview {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(200, 150, 67, 0.32);
+  border-radius: var(--radius);
+  background: rgba(200, 150, 67, 0.11);
+}
+
+.draft-preview strong {
+  color: var(--clay);
+  font-size: 0.9rem;
+}
+
+.draft-preview span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.form-actions {
+  align-items: stretch;
+}
+
+.form-actions .ghost-button,
+.form-actions .primary-button {
+  flex: 1;
+}
+
 .data-actions {
   margin: 14px 0;
 }
@@ -558,7 +676,7 @@ button:focus-visible {
 .card-list {
   display: grid;
   gap: 8px;
-  max-height: 570px;
+  max-height: none;
   overflow: auto;
   padding-right: 2px;
 }
@@ -617,6 +735,51 @@ button:focus-visible {
   text-align: center;
 }
 
+.progress-meter {
+  height: 10px;
+  margin: 12px 0 14px;
+  overflow: hidden;
+  border: 1px solid rgba(73, 107, 88, 0.18);
+  border-radius: 999px;
+  background: rgba(73, 107, 88, 0.08);
+}
+
+.progress-meter span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sage);
+  transition: width 240ms ease;
+}
+
+.progress-list {
+  display: grid;
+  gap: 8px;
+}
+
+.progress-item {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  background: rgba(255, 253, 248, 0.76);
+  text-align: left;
+}
+
+.progress-item strong {
+  font-family: "Noto Serif KR", "Apple SD Gothic Neo", serif;
+  font-size: 1.14rem;
+}
+
+.progress-item span {
+  color: var(--muted);
+  font-size: 0.87rem;
+}
+
 .toast {
   position: fixed;
   right: 22px;
@@ -650,11 +813,7 @@ button:focus-visible {
 
 @media (max-width: 1180px) {
   .workspace {
-    grid-template-columns: minmax(360px, 1.2fr) minmax(320px, 0.8fr);
-  }
-
-  .library-panel {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(360px, 1fr) minmax(330px, 390px);
   }
 }
 
@@ -686,15 +845,37 @@ button:focus-visible {
 
   .summary-strip {
     position: absolute;
+    left: 14px;
     right: 14px;
     bottom: 14px;
-    width: 100%;
+    width: auto;
     min-width: 0;
-    max-width: calc(100% - 28px);
+    max-width: none;
   }
 
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .studio-nav {
+    top: 0;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .studio-nav-button {
+    min-height: 40px;
+    padding: 0 6px;
+    font-size: 0.9rem;
+  }
+
+  .side-panel {
+    position: static;
+    max-height: none;
+  }
+
+  .side-pane {
+    max-height: none;
   }
 
   .flashcard,
@@ -704,7 +885,10 @@ button:focus-visible {
 
   .form-grid,
   .library-tools,
-  .review-row {
+  .review-row,
+  .practice-progress,
+  .progress-grid,
+  .form-actions {
     grid-template-columns: 1fr;
   }
 
@@ -720,14 +904,14 @@ button:focus-visible {
   }
 
   .workspace > *,
+  .studio-nav,
   .summary-strip {
     width: calc(100vw - 28px);
     max-width: calc(100vw - 28px);
   }
 
   .study-panel,
-  .editor-panel,
-  .library-panel {
+  .side-panel {
     padding: 14px;
   }
 
@@ -751,5 +935,9 @@ button:focus-visible {
   .icon-button {
     width: 38px;
     height: 38px;
+  }
+
+  .studio-nav {
+    grid-template-columns: 1fr;
   }
 }

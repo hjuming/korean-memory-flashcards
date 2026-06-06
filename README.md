@@ -10,6 +10,9 @@
 - 標記「還卡住」與「記住了」
 - 搜尋韓文、中文、發音、聯想文字
 - 本機圖片或圖片網址
+- 輸入韓文後產生可編輯的聯想密碼、圖像畫面與圖像 Prompt
+- 側邊欄管理新增卡片、記憶庫與學習進度
+- 待複習、練習次數、連續記住與完成率追蹤
 - 匯入 / 匯出 JSON，方便備份與跨裝置搬移
 - 資料保存在瀏覽器 `localStorage`
 
@@ -53,6 +56,23 @@ Cloudflare Pages 設定：
 | Build command | 留空 |
 | Build output directory | `.` |
 
+## AI 生成設定
+
+目前前端已會呼叫 Cloudflare Pages Function：
+
+```text
+/api/generate-card
+```
+
+若還沒有設定 API key，Function 會回傳本機 fallback 草稿；功能仍可使用。
+
+之後要接 OpenAI API 時，在 Cloudflare Pages 的環境變數新增：
+
+| 變數 | 用途 |
+| --- | --- |
+| `OPENAI_API_KEY` | OpenAI API key，請只放在 Cloudflare 環境變數，不要寫進前端檔案 |
+| `OPENAI_MODEL` | 可選，未設定時使用 `gpt-5` |
+
 也可以用 Wrangler 部署：
 
 ```bash
@@ -64,3 +84,4 @@ npx wrangler pages deploy . --project-name korean-memory-flashcards
 - 這是純前端靜態網站，沒有後端資料庫。
 - 大量本機圖片會佔用 `localStorage`，建議使用圖片網址或定期匯出 JSON 備份。
 - 若未來要多人共用、雲端同步或大量圖片，建議升級成 Supabase + Cloudflare R2 架構。
+- API key 不應提交到 GitHub，也不要放在 `index.html` 或 `assets/app.js`。

@@ -1,4 +1,11 @@
 const STORAGE_KEY = "wedo_korean_memory_cards_v1";
+const {
+  buildMemoryDraft,
+  buildImagePrompt,
+  cleanText,
+  nextDueDate,
+  normalizeProgress
+} = window.KoreanMemoryUtils;
 
 const sampleCards = [
   {
@@ -12,6 +19,7 @@ const sampleCards = [
     image: "assets/images/cards/chinhan-hyeong.jpg",
     status: "new",
     reviewCount: 0,
+    correctStreak: 0,
     createdAt: "2026-06-07T00:00:00.000Z"
   },
   {
@@ -25,6 +33,7 @@ const sampleCards = [
     image: "assets/images/cards/sachon.jpg",
     status: "new",
     reviewCount: 0,
+    correctStreak: 0,
     createdAt: "2026-06-07T00:00:00.000Z"
   },
   {
@@ -38,6 +47,7 @@ const sampleCards = [
     image: "assets/images/cards/jari.jpg",
     status: "stuck",
     reviewCount: 1,
+    correctStreak: 0,
     createdAt: "2026-06-07T00:00:00.000Z"
   },
   {
@@ -51,6 +61,7 @@ const sampleCards = [
     image: "assets/images/cards/yeopseo.jpg",
     status: "new",
     reviewCount: 0,
+    correctStreak: 0,
     createdAt: "2026-06-07T00:00:00.000Z"
   },
   {
@@ -64,6 +75,7 @@ const sampleCards = [
     image: "assets/images/cards/bbang.jpg",
     status: "mastered",
     reviewCount: 2,
+    correctStreak: 1,
     createdAt: "2026-06-07T00:00:00.000Z"
   }
 ];
@@ -84,14 +96,24 @@ const elements = {
   markStuckButton: document.getElementById("markStuckButton"),
   markMasteredButton: document.getElementById("markMasteredButton"),
   copyPromptButton: document.getElementById("copyPromptButton"),
+  reviewCount: document.getElementById("reviewCount"),
+  correctStreak: document.getElementById("correctStreak"),
+  dueLabel: document.getElementById("dueLabel"),
   cardTag: document.getElementById("cardTag"),
   frontKorean: document.getElementById("frontKorean"),
   frontPronunciation: document.getElementById("frontPronunciation"),
   frontVisual: document.getElementById("frontVisual"),
-  frontImageFallback: document.getElementById("frontImageFallback"),
   backMeaning: document.getElementById("backMeaning"),
   backCue: document.getElementById("backCue"),
   backScene: document.getElementById("backScene"),
+  panelTriggers: Array.from(document.querySelectorAll("[data-panel-trigger]")),
+  sidePanes: Array.from(document.querySelectorAll("[data-panel]")),
+  quickKoreanInput: document.getElementById("quickKoreanInput"),
+  quickMeaningInput: document.getElementById("quickMeaningInput"),
+  generateDraftButton: document.getElementById("generateDraftButton"),
+  draftPreview: document.getElementById("draftPreview"),
+  draftCuePreview: document.getElementById("draftCuePreview"),
+  applyDraftButton: document.getElementById("applyDraftButton"),
   cardForm: document.getElementById("cardForm"),
   editorTitle: document.getElementById("editorTitle"),
   submitButton: document.getElementById("submitButton"),
@@ -102,9 +124,11 @@ const elements = {
   tagInput: document.getElementById("tagInput"),
   cueInput: document.getElementById("cueInput"),
   sceneInput: document.getElementById("sceneInput"),
+  imagePromptInput: document.getElementById("imagePromptInput"),
   imageInput: document.getElementById("imageInput"),
   imageFileInput: document.getElementById("imageFileInput"),
   imageFileStatus: document.getElementById("imageFileStatus"),
+  copyFormPromptButton: document.getElementById("copyFormPromptButton"),
   resetSamplesButton: document.getElementById("resetSamplesButton"),
   searchInput: document.getElementById("searchInput"),
   filterInput: document.getElementById("filterInput"),
@@ -112,6 +136,11 @@ const elements = {
   importInput: document.getElementById("importInput"),
   cardList: document.getElementById("cardList"),
   emptyState: document.getElementById("emptyState"),
+  dueCount: document.getElementById("dueCount"),
+  totalReviews: document.getElementById("totalReviews"),
+  masteryRate: document.getElementById("masteryRate"),
+  masteryMeter: document.getElementById("masteryMeter"),
+  progressList: document.getElementById("progressList"),
   toast: document.getElementById("toast")
 };
 
@@ -120,22 +149,23 @@ let currentIndex = 0;
 let isFlipped = false;
 let editingId = "";
 let pendingImageData = "";
+let pendingDraft = null;
 let toastTimer = 0;
 
 function loadCards() {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (!saved) {
-      return sampleCards.map(cloneCard);
+      return sampleCards.map(cloneCard).map(normalizeCard);
     }
     const parsed = JSON.parse(saved);
     const source = Array.isArray(parsed) ? parsed : parsed.cards;
     if (!Array.isArray(source)) {
-      return sampleCards.map(cloneCard);
+      return sampleCards.map(cloneCard).map(normalizeCard);
     }
     return hydrateSampleCards(source.map(normalizeCard).filter(Boolean));
   } catch {
-    return sampleCards.map(cloneCard);
+    return sampleCards.map(cloneCard).map(normalizeCard);
   }
 }
 
@@ -145,11 +175,12 @@ function hydrateSampleCards(loadedCards) {
     if (!sampleCard) {
       return card;
     }
-    return {
+    return normalizeCard({
       ...card,
       image: card.image || sampleCard.image,
-      scene: card.scene || sampleCard.scene
-    };
+      scene: card.scene || sampleCard.scene,
+      imagePrompt: card.imagePrompt || sampleCard.imagePrompt
+    });
   });
 }
 
@@ -171,6 +202,8 @@ function normalizeCard(card) {
   if (!korean || !meaning || !cue) {
     return null;
   }
+  const scene = cleanText(card.scene) || cue;
+  const progress = normalizeProgress(card);
   return {
     id: cleanText(card.id) || createId(),
     korean,
@@ -178,17 +211,17 @@ function normalizeCard(card) {
     pronunciation: cleanText(card.pronunciation),
     tag: cleanText(card.tag) || "情境畫面",
     cue,
-    scene: cleanText(card.scene) || cue,
+    scene,
+    imagePrompt: cleanText(card.imagePrompt) || buildImagePrompt({ ...card, korean, meaning, cue, scene }),
     image: safeImageSource(card.image),
-    status: ["new", "stuck", "mastered"].includes(card.status) ? card.status : "new",
-    reviewCount: Number.isFinite(Number(card.reviewCount)) ? Number(card.reviewCount) : 0,
+    status: progress.status,
+    reviewCount: progress.reviewCount,
+    correctStreak: progress.correctStreak,
+    lastReviewedAt: progress.lastReviewedAt,
+    dueAt: progress.dueAt,
     createdAt: cleanText(card.createdAt) || new Date().toISOString(),
     updatedAt: cleanText(card.updatedAt)
   };
-}
-
-function cleanText(value) {
-  return typeof value === "string" ? value.trim() : "";
 }
 
 function createId() {
@@ -223,7 +256,7 @@ function filteredCards() {
   return cards.filter((card) => {
     const text = `${card.korean} ${card.meaning} ${card.pronunciation} ${card.tag} ${card.cue} ${card.scene}`.toLowerCase();
     const matchesQuery = !query || text.includes(query);
-    const matchesFilter = filter === "all" || card.status === filter || card.tag === filter;
+    const matchesFilter = filter === "all" || (filter === "due" && isDue(card)) || card.status === filter || card.tag === filter;
     return matchesQuery && matchesFilter;
   });
 }
@@ -245,6 +278,7 @@ function render() {
   renderStats();
   renderFlashcard(active);
   renderLibrary(active);
+  renderProgress();
 }
 
 function renderStats() {
@@ -279,6 +313,9 @@ function renderFlashcard(active) {
     elements.backMeaning.textContent = "無資料";
     elements.backCue.textContent = "請調整搜尋條件或新增單字。";
     elements.backScene.textContent = "每張卡都可以放一個畫面，幫大腦抓住聲音與意思。";
+    elements.reviewCount.textContent = "0";
+    elements.correctStreak.textContent = "0";
+    elements.dueLabel.textContent = "今天";
     elements.flashcard.classList.remove("is-flipped");
     return;
   }
@@ -291,6 +328,9 @@ function renderFlashcard(active) {
   elements.backMeaning.textContent = card.meaning;
   elements.backCue.textContent = card.cue;
   elements.backScene.textContent = card.scene || card.cue;
+  elements.reviewCount.textContent = String(card.reviewCount || 0);
+  elements.correctStreak.textContent = String(card.correctStreak || 0);
+  elements.dueLabel.textContent = formatDueLabel(card.dueAt);
   renderVisual(card);
   elements.flashcard.classList.toggle("is-flipped", isFlipped);
 }
@@ -312,10 +352,8 @@ function renderTextVisual(text) {
   elements.frontVisual.replaceChildren();
   elements.frontVisual.classList.remove("has-image");
   const fallback = document.createElement("span");
-  fallback.id = "frontImageFallback";
   fallback.textContent = text;
   elements.frontVisual.appendChild(fallback);
-  elements.frontImageFallback = fallback;
 }
 
 function renderLibrary(active) {
@@ -328,9 +366,8 @@ function renderLibrary(active) {
     item.className = `library-card${activeCard && activeCard.id === card.id ? " is-active" : ""}`;
 
     const content = document.createElement("button");
-    content.className = "link-button";
+    content.className = "link-button library-select-button";
     content.type = "button";
-    content.classList.add("library-select-button");
     content.addEventListener("click", () => {
       currentIndex = index;
       isFlipped = false;
@@ -340,19 +377,57 @@ function renderLibrary(active) {
     const title = document.createElement("strong");
     title.textContent = card.korean;
     const meta = document.createElement("span");
-    meta.textContent = `${card.meaning} · ${card.tag} · ${statusLabel(card.status)}`;
+    meta.textContent = `${card.meaning} · ${card.tag} · ${statusLabel(card.status)} · ${formatDueLabel(card.dueAt)}`;
     content.append(title, meta);
 
     const actions = document.createElement("div");
     actions.className = "library-card-actions";
     actions.append(
       tinyButton("✎", "編輯", () => startEdit(card.id)),
+      tinyButton("⧉", "複製 Prompt", () => copyPromptForCard(card)),
       tinyButton("×", "刪除", () => deleteCard(card.id))
     );
 
     item.append(content, actions);
     elements.cardList.appendChild(item);
   });
+}
+
+function renderProgress() {
+  const dueCards = cards.filter(isDue);
+  const totalReviews = cards.reduce((sum, card) => sum + (card.reviewCount || 0), 0);
+  const mastered = cards.filter((card) => card.status === "mastered").length;
+  const masteryRate = cards.length ? Math.round((mastered / cards.length) * 100) : 0;
+  elements.dueCount.textContent = String(dueCards.length);
+  elements.totalReviews.textContent = String(totalReviews);
+  elements.masteryRate.textContent = `${masteryRate}%`;
+  elements.masteryMeter.style.width = `${masteryRate}%`;
+  elements.progressList.replaceChildren();
+
+  cards
+    .slice()
+    .sort((a, b) => dueSortValue(a) - dueSortValue(b))
+    .slice(0, 8)
+    .forEach((card) => {
+      const item = document.createElement("button");
+      item.className = "progress-item";
+      item.type = "button";
+      item.addEventListener("click", () => {
+        switchPanel("library");
+        elements.searchInput.value = card.korean;
+        elements.filterInput.value = "all";
+        currentIndex = getActiveIndexById(card.id);
+        isFlipped = false;
+        render();
+      });
+
+      const title = document.createElement("strong");
+      title.textContent = card.korean;
+      const meta = document.createElement("span");
+      meta.textContent = `${statusLabel(card.status)} · ${card.reviewCount || 0} 次 · ${formatDueLabel(card.dueAt)}`;
+      item.append(title, meta);
+      elements.progressList.appendChild(item);
+    });
 }
 
 function tinyButton(text, label, handler) {
@@ -380,6 +455,7 @@ function submitCard(event) {
   event.preventDefault();
   const existingCard = editingId ? cards.find((card) => card.id === editingId) : null;
   const image = pendingImageData || safeImageSource(elements.imageInput.value) || existingCard?.image || "";
+  const imagePrompt = cleanText(elements.imagePromptInput.value) || buildImagePrompt(formDraftSource());
   const payload = normalizeCard({
     id: editingId || createId(),
     korean: elements.koreanInput.value,
@@ -388,9 +464,13 @@ function submitCard(event) {
     tag: elements.tagInput.value,
     cue: elements.cueInput.value,
     scene: elements.sceneInput.value,
+    imagePrompt,
     image,
     status: existingCard?.status || "new",
     reviewCount: existingCard?.reviewCount || 0,
+    correctStreak: existingCard?.correctStreak || 0,
+    lastReviewedAt: existingCard?.lastReviewedAt || "",
+    dueAt: existingCard?.dueAt || new Date().toISOString(),
     createdAt: existingCard?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString()
   });
@@ -413,8 +493,20 @@ function submitCard(event) {
 
   saveCards();
   resetForm();
+  switchPanel("library");
   isFlipped = false;
   render();
+}
+
+function formDraftSource() {
+  return {
+    korean: elements.koreanInput.value,
+    meaning: elements.meaningInput.value,
+    pronunciation: elements.pronunciationInput.value,
+    tag: elements.tagInput.value,
+    cue: elements.cueInput.value,
+    scene: elements.sceneInput.value
+  };
 }
 
 function getActiveIndexById(id) {
@@ -426,10 +518,13 @@ function resetForm() {
   elements.cardForm.reset();
   editingId = "";
   pendingImageData = "";
+  pendingDraft = null;
   elements.editorTitle.textContent = "新增一張記憶卡";
   elements.submitButton.textContent = "加入記憶庫";
   elements.cancelEditButton.classList.add("hidden");
   elements.imageFileStatus.textContent = "未選擇圖片";
+  elements.draftPreview.classList.add("hidden");
+  elements.draftCuePreview.textContent = "";
 }
 
 function startEdit(id) {
@@ -439,6 +534,7 @@ function startEdit(id) {
   }
   editingId = id;
   pendingImageData = "";
+  pendingDraft = null;
   elements.editorTitle.textContent = "編輯記憶卡";
   elements.submitButton.textContent = "儲存修改";
   elements.cancelEditButton.classList.remove("hidden");
@@ -448,8 +544,10 @@ function startEdit(id) {
   elements.tagInput.value = card.tag;
   elements.cueInput.value = card.cue;
   elements.sceneInput.value = card.scene;
+  elements.imagePromptInput.value = card.imagePrompt || buildImagePrompt(card);
   elements.imageInput.value = card.image && !card.image.startsWith("data:image/") ? card.image : "";
   elements.imageFileStatus.textContent = card.image && card.image.startsWith("data:image/") ? "已使用本機圖片" : "未選擇圖片";
+  switchPanel("builder");
   elements.koreanInput.focus();
 }
 
@@ -470,9 +568,13 @@ function setCardStatus(status) {
   if (!card) {
     return;
   }
+  const reviewedAt = new Date();
   card.status = status;
   card.reviewCount += 1;
-  card.updatedAt = new Date().toISOString();
+  card.correctStreak = status === "mastered" ? (card.correctStreak || 0) + 1 : 0;
+  card.lastReviewedAt = reviewedAt.toISOString();
+  card.dueAt = nextDueDate(status, card.correctStreak, reviewedAt);
+  card.updatedAt = reviewedAt.toISOString();
   saveCards();
   showToast(status === "mastered" ? "標記為熟了。" : "標記為還卡住。");
   render();
@@ -504,32 +606,88 @@ function shuffleCards() {
   render();
 }
 
+async function generateDraft() {
+  const korean = cleanText(elements.quickKoreanInput.value || elements.koreanInput.value);
+  const meaning = cleanText(elements.quickMeaningInput.value || elements.meaningInput.value);
+  if (!korean) {
+    showToast("請先輸入韓文。");
+    elements.quickKoreanInput.focus();
+    return;
+  }
+  elements.generateDraftButton.disabled = true;
+  elements.generateDraftButton.textContent = "生成中...";
+  pendingDraft = await requestDraft({ korean, meaning });
+  elements.draftCuePreview.textContent = pendingDraft.cue;
+  elements.draftPreview.classList.remove("hidden");
+  applyDraft();
+  elements.generateDraftButton.disabled = false;
+  elements.generateDraftButton.textContent = "生成聯想密碼 / 圖像 Prompt";
+  showToast("已生成可編輯草稿。");
+}
+
+async function requestDraft(input) {
+  try {
+    const response = await fetch("/api/generate-card", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input)
+    });
+    if (!response.ok) {
+      throw new Error("Draft API unavailable");
+    }
+    const data = await response.json();
+    if (data && data.draft) {
+      return data.draft;
+    }
+  } catch {
+    return buildMemoryDraft(input);
+  }
+  return buildMemoryDraft(input);
+}
+
+function applyDraft() {
+  if (!pendingDraft) {
+    return;
+  }
+  elements.koreanInput.value = pendingDraft.korean;
+  elements.meaningInput.value = pendingDraft.meaning === "待補中文意思" ? "" : pendingDraft.meaning;
+  elements.pronunciationInput.value = pendingDraft.pronunciation;
+  elements.tagInput.value = pendingDraft.tag;
+  elements.cueInput.value = pendingDraft.cue;
+  elements.sceneInput.value = pendingDraft.scene;
+  elements.imagePromptInput.value = pendingDraft.imagePrompt;
+}
+
 function copyImagePrompt() {
   const card = currentCard();
   if (!card) {
     return;
   }
-  const prompt = [
-    `請生成一張韓文單字圖像記憶卡插圖。`,
-    `單字：${card.korean}`,
-    `中文意思：${card.meaning}`,
-    `發音拆解：${card.pronunciation || "無"}`,
-    `聯想密碼：${card.cue}`,
-    `畫面：${card.scene || card.cue}`,
-    `風格：溫暖極簡、清楚可記、不要文字堆疊，只保留必要韓文字。`
-  ].join("\n");
+  copyText(card.imagePrompt || buildImagePrompt(card), "圖像 Prompt 已複製。");
+}
 
+function copyPromptForCard(card) {
+  copyText(card.imagePrompt || buildImagePrompt(card), "這張卡的 Prompt 已複製。");
+}
+
+function copyFormPrompt() {
+  const prompt = cleanText(elements.imagePromptInput.value) || buildImagePrompt(formDraftSource());
+  elements.imagePromptInput.value = prompt;
+  copyText(prompt, "表單 Prompt 已複製。");
+}
+
+function copyText(text, successMessage) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(prompt).then(
-      () => showToast("圖像 Prompt 已複製。"),
-      () => fallbackCopy(prompt)
+    navigator.clipboard.writeText(text).then(
+      () => showToast(successMessage),
+      () => fallbackCopy(text, successMessage)
     );
     return;
   }
-  fallbackCopy(prompt);
+  fallbackCopy(text, successMessage);
 }
 
-function fallbackCopy(text) {
+function fallbackCopy(text, successMessage = "已複製。") {
   const area = document.createElement("textarea");
   area.value = text;
   area.setAttribute("readonly", "");
@@ -538,11 +696,11 @@ function fallbackCopy(text) {
   area.select();
   document.execCommand("copy");
   area.remove();
-  showToast("圖像 Prompt 已複製。");
+  showToast(successMessage);
 }
 
 function exportCards() {
-  const payload = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), cards }, null, 2);
+  const payload = JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), cards }, null, 2);
   const blob = new Blob([payload], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -604,8 +762,8 @@ function handleImageFile(event) {
     event.target.value = "";
     return;
   }
-  if (file.size > 600 * 1024) {
-    showToast("圖片超過 600KB，建議改用圖片網址。");
+  if (file.size > 800 * 1024) {
+    showToast("圖片超過 800KB，建議壓縮後再上傳。");
     event.target.value = "";
     return;
   }
@@ -623,12 +781,58 @@ function resetSamples() {
     return;
   }
   const ids = new Set(cards.map((card) => card.id));
-  const missing = sampleCards.filter((card) => !ids.has(card.id)).map(cloneCard);
+  const missing = sampleCards.filter((card) => !ids.has(card.id)).map(cloneCard).map(normalizeCard);
   cards = [...missing, ...cards];
   saveCards();
   currentIndex = 0;
   showToast(`已補回 ${missing.length} 張範例卡。`);
   render();
+}
+
+function switchPanel(name) {
+  elements.panelTriggers.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.panelTrigger === name);
+  });
+  elements.sidePanes.forEach((pane) => {
+    pane.classList.toggle("is-active", pane.dataset.panel === name);
+  });
+}
+
+function isDue(card) {
+  if (!card.dueAt) {
+    return true;
+  }
+  const time = new Date(card.dueAt).getTime();
+  return !Number.isFinite(time) || time <= Date.now();
+}
+
+function dueSortValue(card) {
+  if (!card.dueAt) {
+    return 0;
+  }
+  const time = new Date(card.dueAt).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function formatDueLabel(value) {
+  if (!value) {
+    return "今天";
+  }
+  const due = new Date(value);
+  if (!Number.isFinite(due.getTime())) {
+    return "今天";
+  }
+  const today = new Date();
+  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const startDue = new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime();
+  const days = Math.round((startDue - startToday) / (24 * 60 * 60 * 1000));
+  if (days <= 0) {
+    return "今天";
+  }
+  if (days === 1) {
+    return "明天";
+  }
+  return `${days} 天後`;
 }
 
 function showToast(message) {
@@ -641,8 +845,17 @@ function showToast(message) {
 }
 
 function bindEvents() {
+  elements.panelTriggers.forEach((button) => {
+    button.addEventListener("click", () => switchPanel(button.dataset.panelTrigger));
+  });
+  elements.generateDraftButton.addEventListener("click", generateDraft);
+  elements.applyDraftButton.addEventListener("click", () => {
+    applyDraft();
+    showToast("草稿已套用。");
+  });
   elements.cardForm.addEventListener("submit", submitCard);
   elements.cancelEditButton.addEventListener("click", resetForm);
+  elements.copyFormPromptButton.addEventListener("click", copyFormPrompt);
   elements.flashcard.addEventListener("click", () => {
     isFlipped = !isFlipped;
     render();
