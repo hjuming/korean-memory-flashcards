@@ -294,7 +294,8 @@ h2 {
 .ghost-button:hover,
 .soft-button:hover,
 .link-button:hover,
-.ghost-upload:hover {
+.ghost-upload:hover,
+.pronounce-button:hover {
   transform: translateY(-1px);
   border-color: rgba(73, 107, 88, 0.55);
 }
@@ -309,6 +310,7 @@ h2 {
   border: 1px solid rgba(73, 107, 88, 0.28);
   border-radius: var(--radius);
   color: inherit;
+  cursor: pointer;
   background:
     linear-gradient(145deg, rgba(255, 253, 248, 0.96), rgba(243, 234, 219, 0.72)),
     var(--surface);
@@ -319,6 +321,16 @@ h2 {
 
 .flashcard:hover {
   border-color: rgba(73, 107, 88, 0.72);
+}
+
+.flashcard:focus-visible {
+  outline: 3px solid rgba(200, 150, 67, 0.26);
+  outline-offset: 2px;
+}
+
+.flashcard.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
 }
 
 .flashcard.is-flipped .card-front {
@@ -365,12 +377,34 @@ h2 {
   background: rgba(73, 107, 88, 0.08);
 }
 
+.word-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
 .korean-word {
   font-family: "Noto Serif KR", "Apple SD Gothic Neo", "Songti TC", serif;
   font-size: clamp(3.4rem, 9vw, 7.3rem);
   font-weight: 800;
   line-height: 1;
   overflow-wrap: anywhere;
+}
+
+.pronounce-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid rgba(73, 107, 88, 0.32);
+  border-radius: 999px;
+  color: var(--sage);
+  background: rgba(73, 107, 88, 0.08);
+  font-size: 0.92rem;
+  font-weight: 800;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
 .pronunciation {
@@ -922,6 +956,16 @@ button:focus-visible {
 
   .card-face {
     padding: 22px;
+  }
+
+  .word-row {
+    gap: 10px;
+  }
+
+  .pronounce-button {
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 0.86rem;
   }
 
   .summary-strip {

@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const {
   buildMemoryDraft,
   buildImagePrompt,
+  buildSpeechConfig,
   normalizeProgress
 } = require("../assets/card-utils.js");
 
@@ -28,6 +29,21 @@ const {
   assert.ok(prompt.includes("韓文單字：엽서"));
   assert.ok(prompt.includes("聯想密碼：漢字是葉書。"));
   assert.ok(prompt.includes("溫暖極簡"));
+}
+
+{
+  const speech = buildSpeechConfig(" 친한 형 ");
+  assert.deepEqual(speech, {
+    text: "친한 형",
+    lang: "ko-KR",
+    rate: 0.82,
+    pitch: 1
+  });
+}
+
+{
+  const speech = buildSpeechConfig("");
+  assert.equal(speech, null);
 }
 
 {

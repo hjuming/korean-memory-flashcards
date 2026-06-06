@@ -7,6 +7,7 @@
 - 新增、編輯、刪除韓文記憶卡
 - 支援漢字音、諧音、情境畫面、外來語、文法片語分類
 - 點擊翻面、上一張、下一張、隨機排序
+- 點選閃卡上的「發音」播放韓文朗讀
 - 標記「還卡住」與「記住了」
 - 搜尋韓文、中文、發音、聯想文字
 - 本機圖片或圖片網址
@@ -82,6 +83,15 @@ npx wrangler pages deploy . --project-name korean-memory-flashcards
 ## 注意事項
 
 - 這是純前端靜態網站，沒有後端資料庫。
+- 發音功能使用瀏覽器內建 Web Speech API，不需要 API key；韓文聲音品質取決於使用者裝置是否有 `ko-KR` 語音。
 - 大量本機圖片會佔用 `localStorage`，建議使用圖片網址或定期匯出 JSON 備份。
 - 若未來要多人共用、雲端同步或大量圖片，建議升級成 Supabase + Cloudflare R2 架構。
 - API key 不應提交到 GitHub，也不要放在 `index.html` 或 `assets/app.js`。
+
+## 下一階段建議
+
+詳細規劃見：
+
+```text
+docs/development-roadmap.md
+```

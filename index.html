@@ -32,7 +32,7 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="manifest" href="/site.webmanifest">
     <link rel="preload" as="image" href="assets/images/hero-korean-memory-flashcards.jpg">
-    <link rel="stylesheet" href="assets/styles.css?v=20260607d">
+    <link rel="stylesheet" href="assets/styles.css?v=20260607e">
   </head>
   <body>
     <div class="app-shell">
@@ -81,10 +81,13 @@
             </div>
           </div>
 
-          <button class="flashcard" id="flashcard" type="button" aria-label="點擊翻面">
+          <div class="flashcard" id="flashcard" role="button" tabindex="0" aria-label="點擊翻面">
             <span class="card-face card-front">
               <span class="card-tag" id="cardTag">漢字音</span>
-              <span class="korean-word" id="frontKorean">사촌</span>
+              <span class="word-row">
+                <span class="korean-word" id="frontKorean">사촌</span>
+                <button class="pronounce-button" id="pronounceButton" type="button" aria-label="播放韓文發音" title="播放韓文發音">發音</button>
+              </span>
               <span class="pronunciation" id="frontPronunciation">sa-chon</span>
               <span class="visual-frame" id="frontVisual">
                 <span id="frontImageFallback">四寸親戚站成一排</span>
@@ -101,7 +104,7 @@
                 <span id="backScene">四位堂表兄弟姊妹站在很短的四寸尺旁邊。</span>
               </span>
             </span>
-          </button>
+          </div>
 
           <div class="study-controls">
             <button class="ghost-button" id="prevButton" type="button">← 上一張</button>
@@ -283,7 +286,7 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="assets/card-utils.js?v=20260607d"></script>
-    <script src="assets/app.js?v=20260607d"></script>
+    <script src="assets/card-utils.js?v=20260607e"></script>
+    <script src="assets/app.js?v=20260607e"></script>
   </body>
 </html>

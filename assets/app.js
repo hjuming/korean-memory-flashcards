@@ -2,6 +2,7 @@ const STORAGE_KEY = "wedo_korean_memory_cards_v1";
 const {
   buildMemoryDraft,
   buildImagePrompt,
+  buildSpeechConfig,
   cleanText,
   nextDueDate,
   normalizeProgress
@@ -96,6 +97,7 @@ const elements = {
   markStuckButton: document.getElementById("markStuckButton"),
   markMasteredButton: document.getElementById("markMasteredButton"),
   copyPromptButton: document.getElementById("copyPromptButton"),
+  pronounceButton: document.getElementById("pronounceButton"),
   reviewCount: document.getElementById("reviewCount"),
   correctStreak: document.getElementById("correctStreak"),
   dueLabel: document.getElementById("dueLabel"),
@@ -151,6 +153,7 @@ let editingId = "";
 let pendingImageData = "";
 let pendingDraft = null;
 let toastTimer = 0;
+let koreanVoice = null;
 
 function loadCards() {
   try {
@@ -298,10 +301,13 @@ function renderFlashcard(active) {
     elements.nextButton,
     elements.markStuckButton,
     elements.markMasteredButton,
-    elements.copyPromptButton
+    elements.copyPromptButton,
+    elements.pronounceButton
   ].forEach((button) => {
     button.disabled = !hasCards;
   });
+  elements.flashcard.setAttribute("aria-disabled", String(!hasCards));
+  elements.flashcard.classList.toggle("is-disabled", !hasCards);
 
   if (!card) {
     elements.activeTag.textContent = "沒有符合條件";
@@ -606,6 +612,65 @@ function shuffleCards() {
   render();
 }
 
+function playCurrentPronunciation() {
+  const card = currentCard();
+  if (!card) {
+    return;
+  }
+  playKoreanSpeech(card.korean);
+}
+
+function playKoreanSpeech(korean) {
+  const config = buildSpeechConfig(korean);
+  if (!config) {
+    showToast("目前沒有可朗讀的韓文。");
+    return;
+  }
+  if (!("speechSynthesis" in window) || typeof window.SpeechSynthesisUtterance !== "function") {
+    showToast("這個瀏覽器暫不支援內建發音。");
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(config.text);
+  utterance.lang = config.lang;
+  utterance.rate = config.rate;
+  utterance.pitch = config.pitch;
+  const voice = getKoreanVoice();
+  if (voice) {
+    utterance.voice = voice;
+  }
+  utterance.addEventListener("error", () => {
+    showToast("發音播放失敗，請確認裝置是否有韓文語音。");
+  });
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+  showToast(voice ? "正在播放韓文發音。" : "正在播放；若發音不準，請安裝韓文語音。");
+}
+
+function getKoreanVoice() {
+  if (koreanVoice) {
+    return koreanVoice;
+  }
+  if (!("speechSynthesis" in window)) {
+    return null;
+  }
+  const voices = window.speechSynthesis.getVoices();
+  koreanVoice = voices.find((voice) => voice.lang && voice.lang.toLowerCase().startsWith("ko")) || null;
+  return koreanVoice;
+}
+
+function primeVoices() {
+  if (!("speechSynthesis" in window)) {
+    return;
+  }
+  getKoreanVoice();
+  window.speechSynthesis.addEventListener("voiceschanged", () => {
+    koreanVoice = null;
+    getKoreanVoice();
+  });
+}
+
 async function generateDraft() {
   const korean = cleanText(elements.quickKoreanInput.value || elements.koreanInput.value);
   const meaning = cleanText(elements.quickMeaningInput.value || elements.meaningInput.value);
@@ -857,8 +922,26 @@ function bindEvents() {
   elements.cancelEditButton.addEventListener("click", resetForm);
   elements.copyFormPromptButton.addEventListener("click", copyFormPrompt);
   elements.flashcard.addEventListener("click", () => {
+    if (elements.flashcard.getAttribute("aria-disabled") === "true") {
+      return;
+    }
     isFlipped = !isFlipped;
     render();
+  });
+  elements.flashcard.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+    if (elements.flashcard.getAttribute("aria-disabled") === "true") {
+      return;
+    }
+    event.preventDefault();
+    isFlipped = !isFlipped;
+    render();
+  });
+  elements.pronounceButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    playCurrentPronunciation();
   });
   elements.flipButton.addEventListener("click", () => {
     isFlipped = !isFlipped;
@@ -885,7 +968,12 @@ function bindEvents() {
   elements.imageFileInput.addEventListener("change", handleImageFile);
   elements.resetSamplesButton.addEventListener("click", resetSamples);
   window.addEventListener("keydown", (event) => {
-    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
+    if (
+      event.target instanceof HTMLInputElement ||
+      event.target instanceof HTMLTextAreaElement ||
+      event.target instanceof HTMLSelectElement ||
+      event.target instanceof HTMLButtonElement
+    ) {
       return;
     }
     if (event.key === "ArrowLeft") {
@@ -902,5 +990,6 @@ function bindEvents() {
   });
 }
 
+primeVoices();
 bindEvents();
 render();

@@ -87,9 +87,23 @@
     ].join("\n");
   }
 
+  function buildSpeechConfig(korean) {
+    const text = cleanText(korean);
+    if (!text) {
+      return null;
+    }
+    return {
+      text,
+      lang: "ko-KR",
+      rate: 0.82,
+      pitch: 1
+    };
+  }
+
   return {
     buildMemoryDraft,
     buildImagePrompt,
+    buildSpeechConfig,
     cleanText,
     nextDueDate,
     normalizeProgress
