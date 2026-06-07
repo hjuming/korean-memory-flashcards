@@ -2,6 +2,12 @@
 
 一個可直接部署的靜態網頁，用來整理背不起來的韓文單字。核心方法是把「韓文聲音、中文意思、聯想密碼、圖像畫面」放在同一張 Flashcard 裡，讓記憶不是死背，而是有畫面可抓。
 
+正式網址：
+
+```text
+https://korean.wedopr.com/
+```
+
 ## 功能
 
 - 新增、編輯、刪除韓文記憶卡
@@ -56,6 +62,23 @@ Cloudflare Pages 設定：
 | Framework preset | None |
 | Build command | 留空 |
 | Build output directory | `.` |
+
+`wrangler.toml` 的 `compatibility_date` 需小於或等於 Cloudflare 建置當下的 UTC 日期；若設定成台灣日期但 UTC 還在前一天，Cloudflare Functions 會拒絕發布。
+
+正式分享網址使用 Cloudflare Pages 自訂網域：
+
+```text
+korean.wedopr.com
+```
+
+社交分享設定已固定使用正式網址：
+
+| 欄位 | 設定 |
+| --- | --- |
+| `og:url` | `https://korean.wedopr.com/` |
+| `og:image` | `https://korean.wedopr.com/assets/images/og-korean-memory-flashcards.jpg` |
+| `twitter:image` | `https://korean.wedopr.com/assets/images/og-korean-memory-flashcards.jpg` |
+| `canonical` | `https://korean.wedopr.com/` |
 
 ## AI 生成設定
 
