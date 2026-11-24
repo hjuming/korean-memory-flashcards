@@ -687,26 +687,11 @@ async function generateDraft() {
   applyDraft();
   elements.generateDraftButton.disabled = false;
   elements.generateDraftButton.textContent = "生成聯想密碼 / 圖像 Prompt";
-  showToast("已生成可編輯草稿。");
+  showToast("已用內建範本產生可編輯草稿（案例展示，不呼叫 AI）。");
 }
 
 async function requestDraft(input) {
-  try {
-    const response = await fetch("/api/generate-card", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input)
-    });
-    if (!response.ok) {
-      throw new Error("Draft API unavailable");
-    }
-    const data = await response.json();
-    if (data && data.draft) {
-      return data.draft;
-    }
-  } catch {
-    return buildMemoryDraft(input);
-  }
+  // 案例展示模式：不呼叫 /api/generate-card（該端點已停用 AI，固定回 403），直接用內建範本產生草稿。
   return buildMemoryDraft(input);
 }
 

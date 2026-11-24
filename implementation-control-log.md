@@ -91,3 +91,11 @@
 
 - 若 UI 重構不符合預期，可用 Git 回到本次提交前版本。
 - localStorage key 會維持原名稱，使用者資料不需遷移；若新欄位有問題，舊欄位仍可被 normalize。
+
+## 2026-11-24 案例展示模式
+
+- 決策：MING 裁定本站作為 WEDO 實戰案例展示並開放搜尋收錄，AI 產生功能改為示範模式。
+- `functions/api/generate-card.js`：移除 OpenAI 呼叫，任何請求固定回 403＋「案例展示，不提供 AI 產生」。
+- `assets/app.js`：前端不再呼叫端點，改用內建範本產生草稿；其他不花錢的功能不變。
+- 驗證：`tests/generate-card.test.mjs` 斷言 403、零對外連線、原始碼不含 OpenAI 金鑰或網址；已故障注入（換回舊版端點時測試失敗）。
+
