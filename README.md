@@ -80,22 +80,16 @@ korean.wedopr.com
 | `twitter:image` | `https://korean.wedopr.com/assets/images/og-korean-memory-flashcards.jpg` |
 | `canonical` | `https://korean.wedopr.com/` |
 
-## AI 生成設定
+## 案例展示模式（2026-11-24 起）
 
-目前前端已會呼叫 Cloudflare Pages Function：
+本站目前是 WEDO 實戰案例的展示版，**不呼叫任何 AI 服務**：
 
-```text
-/api/generate-card
-```
+- 「生成聯想密碼 / 圖像 Prompt」改用瀏覽器內建範本（`assets/card-utils.js` 的 `buildMemoryDraft`）產生可編輯草稿。
+- `/api/generate-card` 一律回 `403`（`{"demo": true}`），不讀任何環境變數、不發出對外連線。
+- 原因：該端點沒有登入與流量限制，公開收錄後任何人都能反覆呼叫產生費用。
+- 新增、編輯、刪除、發音、進度、搜尋、本機存檔、匯入匯出都照常可用，資料只存在瀏覽器。
 
-若還沒有設定 API key，Function 會回傳本機 fallback 草稿；功能仍可使用。
-
-之後要接 OpenAI API 時，在 Cloudflare Pages 的環境變數新增：
-
-| 變數 | 用途 |
-| --- | --- |
-| `OPENAI_API_KEY` | OpenAI API key，請只放在 Cloudflare 環境變數，不要寫進前端檔案 |
-| `OPENAI_MODEL` | 可選，未設定時使用 `gpt-5` |
+若日後要恢復 AI 產生，必須先補上登入或驗證、每日上限與 rate limit，再接 API key。
 
 也可以用 Wrangler 部署：
 
